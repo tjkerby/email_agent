@@ -1,7 +1,15 @@
+from pathlib import Path
+import json
+
 from scenario_loader import load_scenario
+from rubric_loader import load_rubric
 from email_agent import EmailAgent, EmailMessage
 from grading_serialization import grading_result_to_storage
-import json
+
+
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_SCENARIO_PATH = BASE_DIR / "scenarios/missed_remote_standup.json"
+DEFAULT_RUBRIC_PATH = BASE_DIR / "rubrics/default.json"
 
 
 def _prompt_student_email(reply_subject: str) -> EmailMessage:
@@ -35,7 +43,8 @@ def main():
     # ------------------------------------------------------------
     # 1. Load the scenario configuration (JSON or YAML)
     # ------------------------------------------------------------
-    scenario = load_scenario("scenarios/missed_remote_standup.json")
+    scenario = load_scenario(DEFAULT_SCENARIO_PATH)
+    rubric_definition = load_rubric(DEFAULT_RUBRIC_PATH)
 
     # Create the email agent for this scenario
     agent = EmailAgent(
@@ -69,6 +78,7 @@ def main():
     result = agent.evaluate_and_respond(
         prior_thread=starter_thread,
         student_email=student_email,
+        rubric=rubric_definition.items,
     )
 
     # ------------------------------------------------------------
@@ -76,6 +86,9 @@ def main():
     # ------------------------------------------------------------
     print("=== GRADING RESULTS ===\n")
     print(f"Scenario: {result.grading.scenario_name}")
+    print(f"Rubric: {rubric_definition.name}")
+    if rubric_definition.description:
+        print(f"Rubric description: {rubric_definition.description}")
     print(f"Total Score: {result.grading.total_score}/{result.grading.max_total_score}\n")
 
     print("Rubric Breakdown:")
